@@ -1,36 +1,35 @@
-// #include "MCP_DAC.h" //reference the library files
-// MCP4921 myDAC;       //create DAC object
-
-// void setup(){
-// myDAC.begin(10);     //initialize
-// }
-
-// void loop(){
-// myDAC.analogWrite(2048);  //output a voltage about 1/2 of Vref
-// }
-
-
+#include "MCP_DAC.h" //reference the library files
 #include <LiquidCrystal.h>
-int rs=7;
-int en=8;
-int d4=9;
-int d5=10;
-int d6=11;
-int d7=12;
+MCP4921 myDAC;       //create DAC object
+
+int rs=12;
+int en=9;
+int d4=5;
+int d5=4;
+int d6=3;
+int d7=2;
 LiquidCrystal lcd(rs,en,d4,d5,d6,d7);
-void setup() {
-  // put your setup code here, to run once:
-lcd.begin(16,2);
+
+
+void setup(){
+myDAC.begin(10);     //initialize
+lcd.begin(16,1);
 }
 
 void loop() {
-lcd.setCursor(0,0);
-lcd.print("Watch me Count");
+  // 4095
+  // 2048
+myDAC.analogWrite(1390);  //output a voltage about 1/2 of Vref
+lcd.setCursor(2,1);
+lcd.autoscroll();
+lcd.print(1);
+delay(1000);
+// lcd.print("Watch me count");
 // for (int j=1;j<=10;j=j+1){
 //   lcd.setCursor(0,1);
 //   lcd.print(j);
-//   delay(500);
- 
+//   delay(500); 
 // }
-//  lcd.clear();
+ lcd.clear();
 }
+
