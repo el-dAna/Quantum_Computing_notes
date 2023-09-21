@@ -1,0 +1,13 @@
+/turing_practice/
+
+# # Ignore all files with .log extension
+# *.log
+
+# # Ignore all files in a specific directory
+# /my_directory/
+
+# # Ignore all .txt files in any directory named "temp"
+# temp/**/*.txt
+
+# # Ignore a specific file
+# file_to_ignore.txt
