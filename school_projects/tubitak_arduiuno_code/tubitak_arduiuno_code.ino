@@ -1,18 +1,21 @@
 #include <LiquidCrystal.h>
 #include "MCP_DAC.h" //reference the library files
-MCP4921 hdTDCs_DAC;       //create DAC object https://cyberblogspot.com/how-to-use-mcp4921-dac-with-arduino/
+MCP4921 hdTDCs_DAC(5, 2);       //create DAC object https://cyberblogspot.com/how-to-use-mcp4921-dac-with-arduino/
 
 int numCols = 16;
 int numRows = 2;
 int scrollSpeed_beforeStimulation = 1000;
 int scrollSpeed_forStimulation = 1000;
+
+const int electrode = A0;
 int rs=7;
 int en=8;
 int d4=9;
 int d5=6;
-int d6=5;
+int d6=11; // 11, 5
 int d7=12;
 LiquidCrystal lcd(rs,en,d4,d5,d6,d7);
+
 String Welcome = "tDCS stimulation starts in...";
 String stimulationMessage = "Active hdTDCs....";
 String afterStimulation = "Stimulation Done!";
@@ -20,7 +23,8 @@ String afterStimulation = "Stimulation Done!";
 
 
 void setup(){
-  hdTDCs_DAC.begin(10);     //initialize
+  Serial.begin(9600);
+  hdTDCs_DAC.begin(3);     //initialize
   lcd.begin(numCols, numRows);
   OnStart(Welcome, scrollSpeed_beforeStimulation, 0.1);
   lcd.clear();
@@ -29,14 +33,67 @@ void setup(){
 
 
 void loop() {  
-  
-  hdTDCs_DAC.analogWrite(1460);
+  // float electrode_voltage = get_voltage(electrode, true);
+  // lcd.setCursor(0, 0);
+  // lcd.print("E_voltage");
+  // lcd.setCursor(0, 1);
+  // lcd.print(electrode_voltage);
+  // delay(2000);
+  // lcd.clear();
+
+  // hdTDCs_DAC.analogWrite(1660);
+  Stimulation(true);
+
+  Run_Checks();
+
   OnStart(stimulationMessage, scrollSpeed_forStimulation, 0.2);
   lcd.clear();
   lcd.setCursor(0, 0);
+  // hdTDCs_DAC.analogWrite(0);
+  Stimulation(false);
   lcd.print(afterStimulation);
   delay(2000);
   exit(0);
+}
+
+
+void Stimulation(bool active){
+  if (active){
+    hdTDCs_DAC.analogWrite(1660);
+  }else{
+    hdTDCs_DAC.analogWrite(0);
+  }
+}
+
+
+void assertWithErrorMessage(bool check, String possible_error, float measured_voltage) {
+  if (!check) {
+    Serial.print("Measured Voltage: ");
+    Serial.println(measured_voltage);
+    Serial.println(possible_error);
+    delay(6000);
+    exit(0);
+  }
+}
+
+bool Run_Checks(){
+  float voltage_at_electrodes = get_voltage(electrode, false);
+  assertWithErrorMessage(voltage_at_electrodes > 10, "Check Voltage at the electrode node!", voltage_at_electrodes);
+}
+
+float get_voltage(int AnaloguePin, bool SerialMonitor) {
+  int analogValue = analogRead(AnaloguePin);
+  // Convert the analog value to a voltage
+  float voltage = analogValue * (5.0 / 1023.0);
+
+  if (SerialMonitor) {
+    // Print the voltage to the serial port
+    Serial.print("Voltage: ");
+    Serial.println(voltage);
+    // Wait for 1 second
+    delay(1000);
+  }
+  return voltage;
 }
 
 
