@@ -16,6 +16,10 @@ int d6=11; // 11, 5
 int d7=12;
 LiquidCrystal lcd(rs,en,d4,d5,d6,d7);
 
+
+bool all_passed;
+int number_of_warns = 1;
+
 String Welcome = "tDCS stimulation starts in...";
 String stimulationMessage = "Active hdTDCs....";
 String afterStimulation = "Stimulation Done!";
@@ -29,6 +33,15 @@ void setup(){
   OnStart(Welcome, scrollSpeed_beforeStimulation, 0.1);
   lcd.clear();
   delay(2000);
+
+  running_checks:
+  all_passed = Run_Checks();
+  if (!all_passed){
+    number_of_warns++;
+    goto running_checks;
+  }
+  
+
 }
 
 
@@ -41,11 +54,9 @@ void loop() {
   // delay(2000);
   // lcd.clear();
 
+
   // hdTDCs_DAC.analogWrite(1660);
   Stimulation(true);
-
-  Run_Checks();
-
   OnStart(stimulationMessage, scrollSpeed_forStimulation, 0.2);
   lcd.clear();
   lcd.setCursor(0, 0);
@@ -66,19 +77,36 @@ void Stimulation(bool active){
 }
 
 
-void assertWithErrorMessage(bool check, String possible_error, float measured_voltage) {
-  if (!check) {
-    Serial.print("Measured Voltage: ");
-    Serial.println(measured_voltage);
+bool assertWithErrorMessage(bool condition, String possible_error, float measured_voltage) {
+  bool passed_check;
+  if (!condition) {
+    //If monitor available
+    Serial.print("WARNING ");
+    Serial.println(number_of_warns);
+    Serial.print(measured_voltage);
+    Serial.println("Volts");
     Serial.println(possible_error);
-    delay(6000);
-    exit(0);
-  }
-}
+    delay(3000);
+    
+    //If only LCD available
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("WARN");
+    lcd.setCursor(5, 0);
+    lcd.print(number_of_warns);
+    lcd.setCursor(8, 0);
+    lcd.print(measured_voltage);
+    lcd.setCursor(12, 0);
+    lcd.print("V");
+    lcd.setCursor(0, 1);
+    lcd.print(possible_error);
+    
 
-bool Run_Checks(){
-  float voltage_at_electrodes = get_voltage(electrode, false);
-  assertWithErrorMessage(voltage_at_electrodes > 10, "Check Voltage at the electrode node!", voltage_at_electrodes);
+
+    passed_check = false;
+    //exit(0);
+  }
+  return passed_check;
 }
 
 float get_voltage(int AnaloguePin, bool SerialMonitor) {
@@ -95,6 +123,16 @@ float get_voltage(int AnaloguePin, bool SerialMonitor) {
   }
   return voltage;
 }
+
+
+bool Run_Checks(){
+  float voltage_at_electrodes = get_voltage(electrode, false);
+  bool condition_1 = voltage_at_electrodes > 100;
+  bool condition_1_result = assertWithErrorMessage(condition_1, "Wrong eltrd. V!", voltage_at_electrodes);
+
+  return condition_1_result;
+}
+
 
 
 void OnStart(String message, int scrollSpeed, float minutes) {
