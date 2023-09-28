@@ -1,13 +1,17 @@
 #include <LiquidCrystal.h>
 #include "MCP_DAC.h" //reference the library files
-MCP4921 hdTDCs_DAC(5, 2);       //create DAC object https://cyberblogspot.com/how-to-use-mcp4921-dac-with-arduino/
+MCP4921 hdTDCs_DAC(5, 2); //third and second yellow wires from the red 5V input to DAC from Arduiuno     //create DAC object https://cyberblogspot.com/how-to-use-mcp4921-dac-with-arduino/
+int DAC_output_pin = 3; //yellow wire close to red 5V input to DAC from Arduiuno 
 
 int numCols = 16;
 int numRows = 2;
 int scrollSpeed_beforeStimulation = 1000;
 int scrollSpeed_forStimulation = 1000;
 
-const int electrode = A0;
+const int electrode = A0; //9V red cable voltage from regulator t arduiuno
+const int five_volt_probe = A3; //5V orange cable from arduiuno to DAC Vin
+const int DAC_output_voltage_probe = A2; // blue cable to measure output voltage of DAC
+
 int rs=7;
 int en=8;
 int d4=9;
@@ -28,7 +32,7 @@ String afterStimulation = "Stimulation Done!";
 
 void setup(){
   Serial.begin(9600);
-  hdTDCs_DAC.begin(3);     //initialize
+  hdTDCs_DAC.begin(DAC_output_pin);     //initialize
   lcd.begin(numCols, numRows);
   OnStart(Welcome, scrollSpeed_beforeStimulation, 0.1);
   lcd.clear();
@@ -94,9 +98,9 @@ bool assertWithErrorMessage(bool condition, String possible_error, float measure
     lcd.print("WARN");
     lcd.setCursor(5, 0);
     lcd.print(number_of_warns);
-    lcd.setCursor(8, 0);
+    lcd.setCursor(9, 0);
     lcd.print(measured_voltage);
-    lcd.setCursor(12, 0);
+    lcd.setCursor(13, 0);
     lcd.print("V");
     lcd.setCursor(0, 1);
     lcd.print(possible_error);
