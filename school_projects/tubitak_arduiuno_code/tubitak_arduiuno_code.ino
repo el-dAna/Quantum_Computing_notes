@@ -9,8 +9,9 @@ int scrollSpeed_beforeStimulation = 1000;
 int scrollSpeed_forStimulation = 1000;
 
 const int electrode = A0; //9V red cable voltage from regulator t arduiuno
-const int five_volt_probe = A3; //5V orange cable from arduiuno to DAC Vin
-const int DAC_output_voltage_probe = A2; // blue cable to measure output voltage of DAC
+const int five_volt_probe = A2; //5V orange cable from arduiuno to DAC Vin
+const int DAC_output_voltage_probe = A1; // blue cable to measure output voltage of DAC
+float Set_DAC_Vout;
 
 int rs=7;
 int en=8;
@@ -31,6 +32,9 @@ String afterStimulation = "Stimulation Done!";
 
 
 void setup(){
+
+  Set_DAC_Vout = 1460; // Tune DAC Vout here
+
   Serial.begin(9600);
   hdTDCs_DAC.begin(DAC_output_pin);     //initialize
   lcd.begin(numCols, numRows);
@@ -38,11 +42,11 @@ void setup(){
   lcd.clear();
   delay(2000);
 
-  running_checks:
-  all_passed = Run_Checks();
+  run_checks_again: // a checkpoint to return to if any of the checks fail. if any check fail then 10mA current will not be output!
+  all_passed = Run_Checks(set_DAC_Vout);
   if (!all_passed){
     number_of_warns++;
-    goto running_checks;
+    goto run_checks_again;
   }
   
 
@@ -50,17 +54,9 @@ void setup(){
 
 
 void loop() {  
-  // float electrode_voltage = get_voltage(electrode, true);
-  // lcd.setCursor(0, 0);
-  // lcd.print("E_voltage");
-  // lcd.setCursor(0, 1);
-  // lcd.print(electrode_voltage);
-  // delay(2000);
-  // lcd.clear();
-
 
   // hdTDCs_DAC.analogWrite(1660);
-  Stimulation(true);
+  Stimulation(true, Set_DAC_Vout);
   OnStart(stimulationMessage, scrollSpeed_forStimulation, 0.2);
   lcd.clear();
   lcd.setCursor(0, 0);
@@ -72,13 +68,16 @@ void loop() {
 }
 
 
-void Stimulation(bool active){
+
+
+void Stimulation(bool active, float set_DAC_Vout){
   if (active){
-    hdTDCs_DAC.analogWrite(1660);
+    hdTDCs_DAC.analogWrite(set_DAC_Vout);
   }else{
     hdTDCs_DAC.analogWrite(0);
   }
 }
+
 
 
 bool assertWithErrorMessage(bool condition, String possible_error, float measured_voltage) {
@@ -105,13 +104,13 @@ bool assertWithErrorMessage(bool condition, String possible_error, float measure
     lcd.setCursor(0, 1);
     lcd.print(possible_error);
     
-
-
     passed_check = false;
     //exit(0);
   }
   return passed_check;
 }
+
+
 
 float get_voltage(int AnaloguePin, bool SerialMonitor) {
   int analogValue = analogRead(AnaloguePin);
@@ -129,13 +128,32 @@ float get_voltage(int AnaloguePin, bool SerialMonitor) {
 }
 
 
-bool Run_Checks(){
-  float voltage_at_electrodes = get_voltage(electrode, false);
-  bool condition_1 = voltage_at_electrodes > 100;
-  bool condition_1_result = assertWithErrorMessage(condition_1, "Wrong eltrd. V!", voltage_at_electrodes);
+bool Run_Checks(float DAC_Vout){
+  int checks_list[3];
 
-  return condition_1_result;
+  //Checks 9V from voltage regulator to arduiuno
+  float voltage_at_electrodes = get_voltage(electrode, false);
+  bool condition_A0 = voltage_at_electrodes >= 9; //this is fixed, Vout of 9V regulator
+  bool condition_A0_result = assertWithErrorMessage(condition_A0, "Wrong eltrd. V!", voltage_at_electrodes);
+  
+  //Checks 5V from arduiuno to DAC
+  float 5V_to_DAC_voltage = get_voltage(five_volt_probe, false);
+  bool condition_A2 = 5V_to_DAC_voltage >= 4.7; // this is fixed, close to 5V from arduiuno
+  bool condition_A2_result = assertWithErrorMessage(condition_A2, "Wrong DAC V_in!", 5V_to_DAC_voltage);
+
+  //checks the Vout of DAC to electrodes
+  float DAC_Vout = get_voltage(DAC_output_voltage_probe, false);
+  bool condition_A1 = DAC_Vout >= DAC_Vout; //tune DAC to output 10mA and set that voltage
+  bool condition_A1_result = assertWithErrorMessage(condition_A1, "Wrong DAC V_out!", DAC_Vout);
+
+  checks_list[0] = condition_A0_result;
+  checks_list[1] = condition_A1_result;
+  checks_list[2] = condition_A2_result;
+  bool all_checks_passed = checks_list[0] & checks_list[1] & checks_list[2];
+
+  return all_checks_passed;
 }
+
 
 
 
