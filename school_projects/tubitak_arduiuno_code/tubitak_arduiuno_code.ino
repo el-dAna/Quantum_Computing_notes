@@ -1,6 +1,7 @@
 #include <LiquidCrystal.h>
 #include "MCP_DAC.h" //reference the library files
 MCP4921 hdTDCs_DAC(5, 2); //third and second yellow wires from the red 5V input to DAC from Arduiuno     //create DAC object https://cyberblogspot.com/how-to-use-mcp4921-dac-with-arduino/
+// Assuming we are using D9 pin for MOSI and D8 pin for SCLK, we create the MCP_DAC object in this manner:
 int DAC_output_pin = 3; //yellow wire close to red 5V input to DAC from Arduiuno 
 
 int numCols = 16;
@@ -11,7 +12,8 @@ int scrollSpeed_forStimulation = 1000;
 const int electrode = A0; //9V red cable voltage from regulator t arduiuno
 const int five_volt_probe = A2; //5V orange cable from arduiuno to DAC Vin
 const int DAC_output_voltage_probe = A1; // blue cable to measure output voltage of DAC
-float Set_DAC_Vout;
+
+float  Set_DAC_Vout = 1460; // Tune DAC Vout here
 
 int rs=7;
 int en=8;
@@ -33,7 +35,7 @@ String afterStimulation = "Stimulation Done!";
 
 void setup(){
 
-  Set_DAC_Vout = 1460; // Tune DAC Vout here
+  
 
   Serial.begin(9600);
   hdTDCs_DAC.begin(DAC_output_pin);     //initialize
@@ -42,12 +44,13 @@ void setup(){
   lcd.clear();
   delay(2000);
 
-  run_checks_again: // a checkpoint to return to if any of the checks fail. if any check fail then 10mA current will not be output!
-  all_passed = Run_Checks(set_DAC_Vout);
-  if (!all_passed){
-    number_of_warns++;
-    goto run_checks_again;
-  }
+  // run_checks_again: // a checkpoint to return to if any of the checks fail. if any check fail then 10mA current will not be output!
+  // //all_passed = Run_Checks(Set_DAC_Vout);
+
+  // if (!all_passed){
+  //   number_of_warns++;
+  //   goto run_checks_again;
+  // }
   
 
 }
@@ -60,8 +63,10 @@ void loop() {
   OnStart(stimulationMessage, scrollSpeed_forStimulation, 0.2);
   lcd.clear();
   lcd.setCursor(0, 0);
+
+
   // hdTDCs_DAC.analogWrite(0);
-  Stimulation(false);
+  Stimulation(false, Set_DAC_Vout);
   lcd.print(afterStimulation);
   delay(2000);
   exit(0);
@@ -128,31 +133,31 @@ float get_voltage(int AnaloguePin, bool SerialMonitor) {
 }
 
 
-bool Run_Checks(float DAC_Vout){
-  int checks_list[3];
+// bool Run_Checks(float DAC_Vout){
+//   int checks_list[3];
 
-  //Checks 9V from voltage regulator to arduiuno
-  float voltage_at_electrodes = get_voltage(electrode, false);
-  bool condition_A0 = voltage_at_electrodes >= 9; //this is fixed, Vout of 9V regulator
-  bool condition_A0_result = assertWithErrorMessage(condition_A0, "Wrong eltrd. V!", voltage_at_electrodes);
+//   //Checks 9V from voltage regulator to arduiuno
+//   float voltage_at_electrodes = get_voltage(electrode, false);
+//   bool condition_A0 = voltage_at_electrodes >= 9; //this is fixed, Vout of 9V regulator
+//   bool condition_A0_result = assertWithErrorMessage(condition_A0, "Wrong eltrd. V!", voltage_at_electrodes);
   
-  //Checks 5V from arduiuno to DAC
-  float 5V_to_DAC_voltage = get_voltage(five_volt_probe, false);
-  bool condition_A2 = 5V_to_DAC_voltage >= 4.7; // this is fixed, close to 5V from arduiuno
-  bool condition_A2_result = assertWithErrorMessage(condition_A2, "Wrong DAC V_in!", 5V_to_DAC_voltage);
+//   //Checks 5V from arduiuno to DAC
+//   float 5V_to_DAC_voltage = get_voltage(five_volt_probe, false);
+//   bool condition_A2 = 5V_to_DAC_voltage >= 4.7; // this is fixed, close to 5V from arduiuno
+//   bool condition_A2_result = assertWithErrorMessage(condition_A2, "Wrong DAC V_in!", 5V_to_DAC_voltage);
 
-  //checks the Vout of DAC to electrodes
-  float DAC_Vout = get_voltage(DAC_output_voltage_probe, false);
-  bool condition_A1 = DAC_Vout >= DAC_Vout; //tune DAC to output 10mA and set that voltage
-  bool condition_A1_result = assertWithErrorMessage(condition_A1, "Wrong DAC V_out!", DAC_Vout);
+//   //checks the Vout of DAC to electrodes
+//   float DAC_Vout = get_voltage(DAC_output_voltage_probe, false);
+//   bool condition_A1 = DAC_Vout >= DAC_Vout; //tune DAC to output 10mA and set that voltage
+//   bool condition_A1_result = assertWithErrorMessage(condition_A1, "Wrong DAC V_out!", DAC_Vout);
 
-  checks_list[0] = condition_A0_result;
-  checks_list[1] = condition_A1_result;
-  checks_list[2] = condition_A2_result;
-  bool all_checks_passed = checks_list[0] & checks_list[1] & checks_list[2];
+//   checks_list[0] = condition_A0_result;
+//   checks_list[1] = condition_A1_result;
+//   checks_list[2] = condition_A2_result;
+//   bool all_checks_passed = checks_list[0] & checks_list[1] & checks_list[2];
 
-  return all_checks_passed;
-}
+//   return all_checks_passed;
+// }
 
 
 
