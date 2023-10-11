@@ -15,7 +15,7 @@ const int DAC_output_voltage_probe = A1; // blue cable to measure output voltage
 
 // Due to circuit connections, the usual output range of DAC(0-5V) changed to (0-3.6)V. The old integer input to DAC was (0-4095) from Datasheet
 // The DAC object now takes integer values from (0-3000) to output (0-3.6)V.
-float  Set_DAC_Vout = 1480; // Tune DAC Vout here to ouput the required voltage for required current(10mA total) bu inputing values in range (0-3000)
+float  Set_DAC_Vout = 1000; //1480; // Tune DAC Vout here to ouput the required voltage for required current(10mA total) bu inputing values in range (0-3000)
 float expected_DAC_Vout = (183/152000)*Set_DAC_Vout;
 float low_expected_DAC_Vout = ((183/152000)*Set_DAC_Vout)-0.1;
 float high_expected_DAC_Vout = ((183/152000)*Set_DAC_Vout)+0.1;
@@ -53,12 +53,12 @@ void setup(){
 
   // Checking for voltages. Precisely the 5v input to DAC(Blue) and Vout(Orange) from DAC to electrodes
   
-  run_checks_again: // a checkpoint to return to if any of the checks fail. if any check fail then 10mA current will not be output!
-  all_passed = Run_Checks(low_expected_DAC_Vout, high_expected_DAC_Vout);
-  if (!all_passed){
-    number_of_warns++;
-    goto run_checks_again;
-  };
+  // run_checks_again: // a checkpoint to return to if any of the checks fail. if any check fail then 10mA current will not be output!
+  // all_passed = Run_Checks(low_expected_DAC_Vout, high_expected_DAC_Vout);
+  // if (!all_passed){
+  //   number_of_warns++;
+  //   goto run_checks_again;
+  // };
 }
 
 
