@@ -1,7 +1,7 @@
 cardio_alco dataset
 orig_shape = 56903, 1 
 56903 unique ids and 0,1 in alco column
-56832 0s and 3041 1s
+53862 0s and 3041 1s
 
 all ids in cardio_alco are in cardio_base, all 56903 ids
 
